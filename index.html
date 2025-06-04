@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Growth Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for scrollability */
+            min-height: 100vh;
+            padding: 1rem; /* Add padding for smaller screens */
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 900px; /* Max width for the game content */
+        }
+        .plant-card {
+            background-color: #ffffff;
+            border: 1px solid #d1fae5; /* Lighter green border */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .plant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .plant-icon {
+            font-size: 3.5rem; /* Increased icon size */
+            line-height: 1;
+            height: 70px; /* Fixed height for icon area */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            color: #10b981; /* Emerald green for icons */
+        }
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 12px; /* Slightly thicker slider */
+            border-radius: 6px;
+            background: #e5e7eb; /* Lighter gray background */
+            outline: none;
+            opacity: 0.8;
+            transition: opacity .2s;
+            margin-top: 0.5rem;
+        }
+        .slider:hover {
+            opacity: 1;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px; /* Larger thumb */
+            height: 24px;
+            border-radius: 50%;
+            background: #10b981; /* Emerald green */
+            cursor: pointer;
+            border: 3px solid white; /* White border for better visibility */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .status-bar {
+            width: 100%;
+            height: 12px; /* Thicker status bar */
+            background-color: #e5e7eb; /* Light gray background */
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            border: 1px solid #d1d5db; /* Subtle border */
+        }
+        .status-bar-fill {
+            height: 100%;
+            background-color: #34d399; /* Green for health */
+            border-radius: 5px; /* Match parent's rounding slightly less */
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+        }
+        .status-wilting .status-bar-fill { background-color: #f59e0b; } /* Amber for wilting */
+        .status-dead .status-bar-fill { background-color: #ef4444; } /* Red for dead */
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #10b981; /* Emerald */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #059669;
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Gray */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: translateY(0px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Message box for alerts */
+        .message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6); /* Darker overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s 0.3s linear; /* Delay visibility change */
+        }
+        .message-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease, visibility 0s 0s linear;
+        }
+        .message-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; /* More rounded */
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            text-align: center;
+            max-width: 90%;
+            width: 450px; /* Slightly wider */
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .message-overlay.active .message-box {
+            transform: scale(1);
+        }
+        .plant-message-area {
+            min-height: 24px; /* Ensure space for one line message */
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-emerald-700">Plant Growth Simulator</h1>
+            <p class="text-lg text-gray-600 mt-2">Adjust sun levels to help your Flowering Dogwoods thrive!</p>
+        </header>
+
+        <div id="game-info" class="text-center mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-lg shadow-sm">
+            <p class="text-xl font-semibold text-emerald-700">Day: <span id="day-counter">0</span></p>
+            <p id="overall-message" class="text-md text-emerald-600 mt-1 min-h-[1.5em]"></p> <!-- Min height for message -->
+        </div>
+
+        <div id="plants-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Plant cards will be injected here by JavaScript -->
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-8">
+            <button id="next-day-btn" class="btn btn-primary w-full sm:w-auto text-lg px-8 py-3">Advance Day</button>
+            <button id="restart-btn" class="btn btn-secondary w-full sm:w-auto text-lg px-8 py-3">Restart Game</button>
+        </div>
+    </div>
+
+    <!-- Custom Message Box Modal -->
+    <div id="custom-message-overlay" class="message-overlay">
+        <div class="message-box">
+            <h3 id="custom-message-title" class="text-2xl font-semibold mb-3 text-emerald-700">Notification</h3>
+            <p id="custom-message-text" class="text-gray-700 mb-6 text-base">Message here.</p>
+            <button id="custom-message-close" class="btn btn-primary px-6 py-2">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        const SINGLE_PLANT_PROTOTYPE = {
+            idealSun: [6, 8], 
+            maxHeight: 10,
+            baseIcon: "🌼", // Changed to Blossom icon
+        };
+
+        const PLANT_TYPES = [
+            { id: "dogwood_a", name: "Flowering Dogwood A", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "dogwood_b", name: "Flowering Dogwood B", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "dogwood_c", name: "Flowering Dogwood C", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "dogwood_d", name: "Flowering Dogwood D", ...SINGLE_PLANT_PROTOTYPE }
+        ];
+
+        // --- Game State ---
+        let plants = [];
+        let currentDay = 0;
+
+        // --- DOM Elements ---
+        const plantsContainer = document.getElementById('plants-container');
+        const nextDayBtn = document.getElementById('next-day-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const dayCounterEl = document.getElementById('day-counter');
+        const overallMessageEl = document.getElementById('overall-message');
+        const messageOverlay = document.getElementById('custom-message-overlay');
+        const messageTitleEl = document.getElementById('custom-message-title');
+        const messageTextEl = document.getElementById('custom-message-text');
+        const messageCloseBtn = document.getElementById('custom-message-close');
+
+        // --- Utility Functions ---
+        function showMessage(title, text) {
+            messageTitleEl.textContent = title;
+            messageTextEl.textContent = text;
+            messageOverlay.classList.add('active');
+        }
+
+        messageCloseBtn.addEventListener('click', () => {
+            messageOverlay.classList.remove('active');
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && messageOverlay.classList.contains('active')) {
+                messageOverlay.classList.remove('active');
+            }
+        });
+
+        // --- Game Logic Functions ---
+        function initializePlant(plantData) {
+            return {
+                ...plantData,
+                currentSun: 6, 
+                height: 0,
+                status: "Seed",
+                consecutiveStressDays: 0, 
+                consecutiveOptimalDays: 0,
+                messages: []
+            };
+        }
+
+        function getPlantIcon(plant) {
+            switch (plant.status) {
+                case "Dead": return "🍂"; 
+                case "Wilting": return "🥀"; 
+                case "Seed": return "🌰";
+                case "Sprout": return "�";
+                case "Growing": return "🍃"; 
+                case "Mature": return plant.baseIcon; // Will now use the blossom icon
+                case "Thriving": return `✨${plant.baseIcon}✨`; // Will now use the blossom icon
+                default: return "❓";
+            }
+        }
+
+        function updatePlantStatus(plant) {
+            if (plant.status === "Dead") return;
+
+            const isSlowGrowthSun = plant.currentSun >= 3 && plant.currentSun <= 5;
+
+            if (isSlowGrowthSun) {
+                if (currentDay === 1 && plant.status === "Seed" && plant.height > 0) {
+                    plant.status = "Sprout";
+                    plant.messages.push(`${plant.name} sprouted on day 1.`);
+                } else if (currentDay === 5 && plant.status === "Sprout" && plant.height > 0) {
+                    plant.status = "Growing";
+                    plant.messages.push(`${plant.name} started growing on day 5.`);
+                } else if (plant.status !== "Seed" && plant.status !== "Sprout" && plant.status !== "Growing") {
+                    if (plant.height > 0 && plant.status !== "Growing" && plant.status !== "Sprout") { 
+                        plant.status = (plant.height < plant.maxHeight * 0.3) ? "Sprout" : "Growing";
+                    }
+                }
+                if (plant.status === "Mature" || plant.status === "Thriving") {
+                    plant.status = "Growing"; 
+                    plant.messages.push(`${plant.name} continues slow growth, but won't mature further in this light.`);
+                }
+
+            } else { 
+                if (plant.status === "Wilting" && plant.currentSun >= plant.idealSun[0] && plant.currentSun <= plant.idealSun[1]) {
+                    plant.status = "Growing"; 
+                    plant.messages.push(`${plant.name} is recovering!`);
+                }
+                
+                if (plant.height >= plant.maxHeight && plant.consecutiveOptimalDays >= 2) {
+                    plant.status = "Thriving";
+                } else if (plant.height >= plant.maxHeight * 0.7) {
+                    plant.status = "Mature";
+                } else if (plant.height >= plant.maxHeight * 0.3) {
+                    plant.status = "Growing";
+                } else if (plant.height > 0) {
+                    plant.status = "Sprout";
+                } else if (plant.status !== "Seed") { 
+                    plant.status = "Dead"; 
+                    plant.messages.push(`${plant.name} withered away.`);
+                }
+            }
+            if (plant.height <= 0 && plant.status !== "Seed" && plant.status !== "Dead") {
+                plant.status = "Dead";
+                plant.messages.push(`${plant.name} could not survive.`);
+            }
+        }
+
+
+        function advanceDay() {
+            currentDay++;
+            dayCounterEl.textContent = currentDay;
+            overallMessageEl.textContent = "";
+            let allThriving = true;
+            let anyDead = false;
+            let dailyPlantMessages = [];
+
+            plants.forEach(plant => {
+                plant.messages = []; 
+
+                if (plant.status === "Dead") {
+                    anyDead = true;
+                    allThriving = false;
+                    return;
+                }
+
+                const sun = plant.currentSun;
+                let growthToday = 0;
+
+                if ((sun >= 0 && sun <= 2) || (sun >= 9 && sun <= 10)) { 
+                    plant.status = "Dead";
+                    plant.height = 0;
+                    growthToday = 0; 
+                    plant.consecutiveOptimalDays = 0;
+                    plant.consecutiveStressDays++; 
+                    if (sun <= 2) {
+                        plant.messages.push(`${plant.name} received too little sun and died immediately!`);
+                    } else {
+                        plant.messages.push(`${plant.name} received far too much sun and died immediately!`);
+                    }
+                } else if (sun >= 6 && sun <= 8) { 
+                    plant.consecutiveOptimalDays++;
+                    plant.consecutiveStressDays = 0;
+                    growthToday = (plant.status === "Wilting") ? 1.0 : 1.5; 
+                    if (plant.status !== "Wilting") {
+                         plant.messages.push(`${plant.name} enjoyed the perfect sunlight.`);
+                    } else {
+                         plant.messages.push(`${plant.name} is recovering in the good sunlight.`);
+                    }
+                    if(plant.status === "Wilting") plant.status = "Growing";
+
+                } else if (sun >= 3 && sun <= 5) { 
+                    plant.consecutiveOptimalDays = 0; 
+                    plant.consecutiveStressDays = 0;  
+                    growthToday = 0.5;
+                    plant.messages.push(`${plant.name} is growing slowly with moderate sun.`);
+                    if(plant.status === "Wilting") plant.status = "Growing"; 
+                }
+                
+                if (plant.status !== "Dead") { 
+                    plant.height = Math.max(0, Math.min(plant.maxHeight, plant.height + growthToday));
+                }
+                
+                updatePlantStatus(plant); 
+
+                if (plant.status !== "Thriving") allThriving = false;
+                if (plant.status === "Dead") anyDead = true;
+                
+                if(plant.messages.length > 0) {
+                    dailyPlantMessages.push(plant.messages[plant.messages.length-1]);
+                }
+            });
+
+            renderPlants();
+            checkGameEndCondition(allThriving, anyDead);
+
+            if(dailyPlantMessages.length > 0 && !nextDayBtn.disabled) {
+                overallMessageEl.textContent = "Daily Report: " + dailyPlantMessages.join(' ');
+            } else if (!nextDayBtn.disabled) {
+                 overallMessageEl.textContent = "A calm day in the garden.";
+            }
+        }
+        
+        function checkGameEndCondition(allThriving, anyDead) {
+            let gameEndMessage = "";
+            let gameEndTitle = "Game Update";
+
+            if (allThriving && plants.length > 0 && plants.every(p => p.status === "Thriving")) {
+                gameEndTitle = "Congratulations! 🎉";
+                gameEndMessage = "All your Flowering Dogwoods are thriving! You won in " + currentDay + " days!";
+                nextDayBtn.disabled = true;
+            } else {
+                const livingPlants = plants.filter(p => p.status !== "Dead").length;
+                if (livingPlants === 0 && plants.length > 0) {
+                    gameEndTitle = "Oh No... 🍂";
+                    gameEndMessage = "All your Flowering Dogwoods have perished. The game lasted " + currentDay + " days.";
+                    nextDayBtn.disabled = true;
+                }
+            }
+            if (gameEndMessage) {
+                overallMessageEl.textContent = gameEndMessage; 
+                showMessage(gameEndTitle, gameEndMessage); 
+            }
+        }
+
+        function renderPlants() {
+            plantsContainer.innerHTML = '';
+            plants.forEach((plant) => {
+                const card = document.createElement('div');
+                card.className = `plant-card status-${plant.status.toLowerCase()}`; 
+                
+                let statusColorClass = 'text-gray-600';
+                if (plant.status === "Thriving") statusColorClass = 'text-green-500 font-semibold';
+                else if (plant.status === "Wilting") statusColorClass = 'text-amber-500 font-semibold';
+                else if (plant.status === "Dead") statusColorClass = 'text-red-600 font-bold';
+                else if (plant.status === "Growing" || plant.status === "Mature") statusColorClass = 'text-emerald-600';
+
+                let healthBarFill = (plant.height / plant.maxHeight) * 100;
+                if (plant.status === 'Dead') {
+                     healthBarFill = 100; 
+                }
+
+                card.innerHTML = `
+                    <h3 class="text-xl font-semibold text-gray-800 mb-1">${plant.name}</h3>
+                    <div class="plant-icon">${getPlantIcon(plant)}</div>
+                    <p class="text-sm ${statusColorClass} mb-1">Status: ${plant.status}</p>
+                    <div class="w-full status-bar mb-2">
+                        <div class="status-bar-fill" style="width: ${healthBarFill}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">Height: ${plant.height.toFixed(1)} / ${plant.maxHeight}</p>
+                    
+                    <div class="w-full pt-2">
+                        <label for="sun-${plant.id}" class="text-sm text-gray-700 block mb-1">☀️: <span id="sun-value-${plant.id}" class="font-semibold">${plant.currentSun}</span></label>
+                        <input type="range" min="0" max="10" value="${plant.currentSun}" class="slider" id="sun-${plant.id}" ${plant.status === 'Dead' ? 'disabled' : ''}>
+                    </div>
+                    <div id="plant-message-${plant.id}" class="text-xs text-blue-600 plant-message-area mt-2">
+                        ${plant.messages.length > 0 ? plant.messages[plant.messages.length-1] : ''}
+                    </div>
+                `;
+                plantsContainer.appendChild(card);
+
+                const slider = document.getElementById(`sun-${plant.id}`);
+                const sunValueDisplay = document.getElementById(`sun-value-${plant.id}`);
+                slider.addEventListener('input', (e) => {
+                    if (plant.status !== 'Dead') {
+                        plant.currentSun = parseInt(e.target.value);
+                        sunValueDisplay.textContent = plant.currentSun;
+                    }
+                });
+            });
+        }
+
+        function setupGame() {
+            currentDay = 0;
+            plants = PLANT_TYPES.map(pt => initializePlant(pt));
+            dayCounterEl.textContent = currentDay;
+            overallMessageEl.textContent = "Adjust sun levels for each Flowering Dogwood and advance the day.";
+            nextDayBtn.disabled = false;
+            renderPlants();
+        }
+
+        nextDayBtn.addEventListener('click', advanceDay);
+        restartBtn.addEventListener('click', () => {
+            showMessage("Game Restarted!", "The garden has been reset. Good luck with your Flowering Dogwoods!");
+            setupGame();
+        });
+
+        window.onload = () => {
+            setupGame();
+        };
+    </script>
+</body>
+</html>
+�
