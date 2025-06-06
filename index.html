@@ -311,7 +311,7 @@
 
             } else { 
                 if (plant.status === "Wilting" && plant.currentSun >= plant.idealSun[0] && plant.currentSun <= plant.idealSun[1]) {
-                    plant.status = "Growing"; 
+                    plant.status = "Wilting"; 
                     plant.messages.push(`${plant.name} is recovering!`);
                 }
                 
