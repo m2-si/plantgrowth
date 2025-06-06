@@ -188,7 +188,7 @@
     <div class="container mx-auto">
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-emerald-700">Plant Growth Simulator</h1>
-            <p class="text-lg text-gray-600 mt-2">Adjust sun levels to help your Flowering Dogwoods thrive!</p>
+            <p class="text-lg text-gray-600 mt-2">Adjust sun levels to help your Marigolds thrive!</p>
         </header>
 
         <div id="game-info" class="text-center mb-6 p-4 bg-emerald-50 border border-emerald-300 rounded-lg shadow-sm">
@@ -220,14 +220,14 @@
         const SINGLE_PLANT_PROTOTYPE = {
             idealSun: [6, 8], 
             maxHeight: 10,
-            baseIcon: "🌼", // Changed to Blossom icon
+            baseIcon: "🌻", // Changed to sunflower icon
         };
 
         const PLANT_TYPES = [
-            { id: "dogwood_a", name: "Flowering Dogwood A", ...SINGLE_PLANT_PROTOTYPE },
-            { id: "dogwood_b", name: "Flowering Dogwood B", ...SINGLE_PLANT_PROTOTYPE },
-            { id: "dogwood_c", name: "Flowering Dogwood C", ...SINGLE_PLANT_PROTOTYPE },
-            { id: "dogwood_d", name: "Flowering Dogwood D", ...SINGLE_PLANT_PROTOTYPE }
+            { id: "marigold_a", name: "Marigold A", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "marigold_b", name: "Marigold B", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "marigold_c", name: "Marigold C", ...SINGLE_PLANT_PROTOTYPE },
+            { id: "marigold_d", name: "Marigold D", ...SINGLE_PLANT_PROTOTYPE }
         ];
 
         // --- Game State ---
@@ -278,11 +278,11 @@
             switch (plant.status) {
                 case "Dead": return "🍂"; 
                 case "Wilting": return "🥀"; 
-                case "Seed": return "🌰";
-                case "Sprout": return "�";
+                case "Seed": return "�";
+                case "Sprout": return "🌱";
                 case "Growing": return "🍃"; 
-                case "Mature": return plant.baseIcon; // Will now use the blossom icon
-                case "Thriving": return `✨${plant.baseIcon}✨`; // Will now use the blossom icon
+                case "Mature": return plant.baseIcon; 
+                case "Thriving": return `✨${plant.baseIcon}✨`;
                 default: return "❓";
             }
         }
@@ -415,13 +415,13 @@
 
             if (allThriving && plants.length > 0 && plants.every(p => p.status === "Thriving")) {
                 gameEndTitle = "Congratulations! 🎉";
-                gameEndMessage = "All your Flowering Dogwoods are thriving! You won in " + currentDay + " days!";
+                gameEndMessage = "All your Marigolds are thriving! You won in " + currentDay + " days!";
                 nextDayBtn.disabled = true;
             } else {
                 const livingPlants = plants.filter(p => p.status !== "Dead").length;
                 if (livingPlants === 0 && plants.length > 0) {
                     gameEndTitle = "Oh No... 🍂";
-                    gameEndMessage = "All your Flowering Dogwoods have perished. The game lasted " + currentDay + " days.";
+                    gameEndMessage = "All your Marigolds have perished. The game lasted " + currentDay + " days.";
                     nextDayBtn.disabled = true;
                 }
             }
@@ -482,14 +482,14 @@
             currentDay = 0;
             plants = PLANT_TYPES.map(pt => initializePlant(pt));
             dayCounterEl.textContent = currentDay;
-            overallMessageEl.textContent = "Adjust sun levels for each Flowering Dogwood and advance the day.";
+            overallMessageEl.textContent = "Adjust sun levels for each Marigold and advance the day.";
             nextDayBtn.disabled = false;
             renderPlants();
         }
 
         nextDayBtn.addEventListener('click', advanceDay);
         restartBtn.addEventListener('click', () => {
-            showMessage("Game Restarted!", "The garden has been reset. Good luck with your Flowering Dogwoods!");
+            showMessage("Game Restarted!", "The garden has been reset. Good luck with your Marigolds!");
             setupGame();
         });
 
